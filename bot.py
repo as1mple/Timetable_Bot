@@ -94,8 +94,10 @@ def get_group(message):
     save_data('group', group)
     markup = types.ReplyKeyboardMarkup()
     month = [str(i) for i in range(1, 13)]
-    markup.row(*month[:7])
-    markup.row(*month[7:])
+    markup.row(*month[:3])
+    markup.row(*month[3:6])
+    markup.row(*month[6:9])
+    markup.row(*month[9:])
 
     bot.send_message(message.chat.id, "Виберіть місяць в яку вас цікавить розклад", reply_markup=markup)
     bot.register_next_step_handler(message, get_month)
