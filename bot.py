@@ -32,14 +32,16 @@ def handle_start_help(message):
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
-def event_handler(message):  # Название функции не играет никакой роли, в принципе
+def event_handler(message):
     logging.info(f"сообщение которое пришло => {message.text}")
 
     if word_search(message.text):
         say_hello(message)
     elif message.text == 'ТАК':
         markup = types.ReplyKeyboardMarkup()
-        markup.row(*[str(i) for i in range(13)])
+        month = [str(i) for i in range(1, 13)]
+        markup.row(*month[:7])
+        markup.row(*month[7:])
 
         bot.send_message(message.chat.id, "Виберіть місяць в яку вас цікавить розклад", reply_markup=markup)
         bot.register_next_step_handler(message, get_month)
@@ -48,6 +50,7 @@ def event_handler(message):  # Название функции не играет
 
 
 def say_hello(message):
+    """Данная функция является первой в цепочке обработке событий не считая /start"""
     if word_search(message.text):
         logging.info("С ботом поздоровались")
         bot.send_message(message.chat.id,
@@ -60,7 +63,6 @@ def say_hello(message):
 
 
 def get_course(message):
-    # if message.text[:1] == 'I':
     course = message.text
     save_data('course', course)
     bot.send_message(message.chat.id, f"Ітак ви на {course} курсі. Напишіть назву вашого факультету")
@@ -77,9 +79,10 @@ def get_fac(message):
 def get_group(message):
     group = message.text
     save_data('group', group)
-    #   bot.send_message(message.chat.id, f"Напишіть дату на яку вас цікавить розклад")
     markup = types.ReplyKeyboardMarkup()
-    markup.row(*[str(i) for i in range(13)])
+    month = [str(i) for i in range(1, 13)]
+    markup.row(*month[:7])
+    markup.row(*month[7:])
 
     bot.send_message(message.chat.id, "Виберіть місяць в яку вас цікавить розклад", reply_markup=markup)
     bot.register_next_step_handler(message, get_month)
@@ -89,11 +92,12 @@ def get_month(message):
     date = message.text
     save_data('date', date)
     markup = types.ReplyKeyboardMarkup()
-    markup.row(*[str(i) for i in range(7)])
-    markup.row(*[str(i) for i in range(7, 14)])
-    markup.row(*[str(i) for i in range(14, 21)])
-    markup.row(*[str(i) for i in range(21, 28)])
-    markup.row(*[str(i) for i in range(28, 32)])
+    dates_range = [str(i) for i in range(1, 32)]
+    markup.row(*dates_range[:7])
+    markup.row(*dates_range[7:14])
+    markup.row(*dates_range[14:21])
+    markup.row(*dates_range[21: 28])
+    markup.row(*dates_range[28:32])
     bot.send_message(message.chat.id, "Виберіть число в яке вас цікавить розклад", reply_markup=markup)
     bot.register_next_step_handler(message, get_date)
 
@@ -106,7 +110,7 @@ def get_date(message):
 
 
 def show(message):
-    print(info.get("date", ""))
+    """Вывод информации по введенным пользователем критериям"""
     data = pd.read_csv('РОЗКЛАД.csv')
     information = list(data.query(f'Date == {info.get("date", "")}').values[0])
     [bot.send_message(message.chat.id, f"{i - 2} Урок = > {information[i]}") for i in range(3, len(information))]
@@ -116,13 +120,14 @@ def show(message):
     bot.send_message(message.chat.id, "Бажаєте переглянути даний розклад в іншу дату ?", reply_markup=markup)
 
 
-def save_data(key, value):
+def save_data(key: str, value: str):
+    """Сохранение введенной пользователем информации"""
     info.update({key: value})
-    print(info)
-    logging.info(f"Информация успешно добавлена => {key}")
+    logging.info(f"Информация успешно добавлена => {info}")
 
 
 def word_search(text: str) -> bool:
+    """Функция котороя ищет слова приветсвия"""
     key_word = ['hello', 'привет', 'hi', 'ку', 'вітаю', 'привіт']
     array = list(map(lambda el: el.lower(), text.split()))
     result = True in list(map(lambda el: el in array, key_word))
