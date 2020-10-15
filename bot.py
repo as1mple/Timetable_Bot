@@ -128,7 +128,7 @@ def show(message):
     """Вывод информации по введенным пользователем критериям"""
     data = pd.read_csv('РОЗКЛАД.csv')
     information = list(data.query(f'Date == {info.get("date", "")}').values[0])
-    [bot.send_message(message.chat.id, f"{i - 2} Урок = > {information[i]}") for i in range(3, len(information))]
+    [bot.send_message(message.chat.id, f"{i - 2} Урок = > {information[i]}") for i in range(3, len(information)) if type(information[i]) == str]
 
     markup = types.ReplyKeyboardMarkup()
     markup.row('ТАК', 'НІ')
