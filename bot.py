@@ -65,14 +65,27 @@ def say_hello(message):
 def get_course(message):
     course = message.text
     save_data('course', course)
-    bot.send_message(message.chat.id, f"Ітак ви на {course} курсі. Напишіть назву вашого факультету")
+    markup = types.ReplyKeyboardMarkup()
+    fac_base = ['Комп`ютерних систем і автоматики', 'Менеджменту та інформаційної безпеки',
+                'Інформаційних технологій та комп`ютерної інженерії',
+                'Інститут магістратури, аспірантури та докторантури',
+                'Інфокомунікацій, радіоелектроніки та наносистем', 'Будівництва, теплоенергетики та газопостачання',
+                'Електроенергетики та електромеханіки', 'Машинобудування та транспорту',
+                'Екологічної безпеки та моніторингу довкілля']
+
+    [markup.row(el) for el in fac_base]
+
+    bot.send_message(message.chat.id, f"Ітак ви на {course} курсі. Напишіть назву вашого факультету",
+                     reply_markup=markup)
+
     bot.register_next_step_handler(message, get_fac)
 
 
 def get_fac(message):
     fac = message.text
     save_data('fac', fac)
-    bot.send_message(message.chat.id, f"Напишіть назву вашої групи")
+    markup = types.ReplyKeyboardRemove()
+    bot.send_message(message.chat.id, f"Напишіть назву вашої групи", reply_markup=markup)
     bot.register_next_step_handler(message, get_group)
 
 
