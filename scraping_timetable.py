@@ -1,6 +1,6 @@
 from selenium import webdriver
 import pandas as pd
-from  config import  *
+from config import *
 
 clean_heap = lambda array: [item for index, item in enumerate(array) if index % 8 != 0]
 
