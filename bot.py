@@ -75,7 +75,7 @@ def get_course(message):
 
     [markup.row(el) for el in fac_base]
 
-    bot.send_message(message.chat.id, f"Ітак ви на {course} курсі. Напишіть назву вашого факультету",
+    bot.send_message(message.chat.id, f"Ітак ви на {course} курсі. Вкажіть назву вашого факультету",
                      reply_markup=markup)
 
     bot.register_next_step_handler(message, get_fac)
