@@ -40,8 +40,10 @@ def event_handler(message):
     elif message.text == 'ТАК':
         markup = types.ReplyKeyboardMarkup()
         month = [str(i) for i in range(1, 13)]
-        markup.row(*month[:7])
-        markup.row(*month[7:])
+        markup.row(*month[:3])
+        markup.row(*month[3:6])
+        markup.row(*month[6:9])
+        markup.row(*month[9:])
 
         bot.send_message(message.chat.id, "Виберіть місяць в яку вас цікавить розклад", reply_markup=markup)
         bot.register_next_step_handler(message, get_month)
@@ -128,7 +130,8 @@ def show(message):
     """Вывод информации по введенным пользователем критериям"""
     data = pd.read_csv('РОЗКЛАД.csv')
     information = list(data.query(f'Date == {info.get("date", "")}').values[0])
-    [bot.send_message(message.chat.id, f"{i - 2} Урок = > {information[i]}") for i in range(3, len(information)) if type(information[i]) == str]
+    [bot.send_message(message.chat.id, f"{i - 2} Урок = > {information[i]}") for i in range(3, len(information)) if
+     type(information[i]) == str]
 
     markup = types.ReplyKeyboardMarkup()
     markup.row('ТАК', 'НІ')
