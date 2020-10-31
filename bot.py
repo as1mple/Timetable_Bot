@@ -1,11 +1,14 @@
-from scraping_timetable import main_scraping
 import config
+from connect import get_response
 
 import logging
 
-import pandas as pd
 import telebot
+
 from telebot import types
+
+DAYS = {'Пн': 0, 'Вт': 1, 'Ср': 2, 'Чт': 3, 'Пт': 4, 'Сб': 5, 'Нд': 6}
+CS = {'I': 1, 'II': 2, 'III': 3, 'IV': 4}
 
 info = {}
 
@@ -39,14 +42,11 @@ def event_handler(message):
         say_hello(message)
     elif message.text == 'ТАК':
         markup = types.ReplyKeyboardMarkup()
-        month = [str(i) for i in range(1, 13)]
-        markup.row(*month[:3])
-        markup.row(*month[3:6])
-        markup.row(*month[6:9])
-        markup.row(*month[9:])
-
-        bot.send_message(message.chat.id, "Виберіть місяць в яку вас цікавить розклад", reply_markup=markup)
-        bot.register_next_step_handler(message, get_month)
+        markup.row('Ця неділя', 'Наступна неділя')
+        bot.send_message(message.chat.id,
+                         "Вас цікавить розклад на цій неді чи на наступній (діапазон буде розширений у наступних релізах",
+                         reply_markup=markup)
+        bot.register_next_step_handler(message, get_day)
     else:
         bot.send_message(message.chat.id, f"Не зрозумів. Перевірте правильність введення")
 
@@ -65,17 +65,15 @@ def say_hello(message):
 
 
 def get_course(message):
-    course = message.text
+    course = CS[message.text]
     save_data('course', course)
     markup = types.ReplyKeyboardMarkup()
-    fac_base = ['Комп`ютерних систем і автоматики', 'Менеджменту та інформаційної безпеки',
-                'Інформаційних технологій та комп`ютерної інженерії',
-                'Інститут магістратури, аспірантури та докторантури',
-                'Інфокомунікацій, радіоелектроніки та наносистем', 'Будівництва, теплоенергетики та газопостачання',
-                'Електроенергетики та електромеханіки', 'Машинобудування та транспорту',
-                'Екологічної безпеки та моніторингу довкілля']
 
-    [markup.row(el) for el in fac_base]
+    answer = get_response(params=info)['message']
+
+    at = answer.find('[') + 1
+    to = answer.find(']')
+    [markup.row(el) for el in answer[at:to].split(',')]
 
     bot.send_message(message.chat.id, f"Ітак ви на {course} курсі. Вкажіть назву вашого факультету",
                      reply_markup=markup)
@@ -88,54 +86,77 @@ def get_fac(message):
     save_data('fac', fac)
     markup = types.ReplyKeyboardRemove()
     bot.send_message(message.chat.id, f"Напишіть назву вашої групи", reply_markup=markup)
-    bot.register_next_step_handler(message, get_group)
+    bot.register_next_step_handler(message, get_week)
 
 
-def get_group(message):
+def get_week(message):
     group = message.text
     save_data('group', group)
     markup = types.ReplyKeyboardMarkup()
-    month = [str(i) for i in range(1, 13)]
-    markup.row(*month[:3])
-    markup.row(*month[3:6])
-    markup.row(*month[6:9])
-    markup.row(*month[9:])
-
-    bot.send_message(message.chat.id, "Виберіть місяць в яку вас цікавить розклад", reply_markup=markup)
-    bot.register_next_step_handler(message, get_month)
+    markup.row('Ця неділя', 'Наступна неділя')
+    bot.send_message(message.chat.id,
+                     "Вас цікавить розклад на цій неді чи на наступній (діапазон буде розширений у наступних релізах",
+                     reply_markup=markup)
+    bot.register_next_step_handler(message, get_day)
 
 
-def get_month(message):
-    date = message.text
-    save_data('date', date)
+def get_day(message):
+    week = 0 if message.text == 'Ця неділя' else 1
+    save_data('week', week)
     markup = types.ReplyKeyboardMarkup()
-    dates_range = [str(i) for i in range(1, 32)]
-    markup.row(*dates_range[:7])
-    markup.row(*dates_range[7:14])
-    markup.row(*dates_range[14:21])
-    markup.row(*dates_range[21: 28])
-    markup.row(*dates_range[28:32])
-    bot.send_message(message.chat.id, "Виберіть число в яке вас цікавить розклад", reply_markup=markup)
+    markup.row(*list(DAYS.keys())[:3])
+    markup.row(*list(DAYS.keys())[3:6])
+    markup.row(list(DAYS.keys())[-1])
+    bot.send_message(message.chat.id, 'Виберіть день в який вас цікавить розклад', reply_markup=markup)
     bot.register_next_step_handler(message, get_date)
 
 
+# def get_group(message):
+#     group = message.text
+#     save_data('group', group)
+#     markup = types.ReplyKeyboardMarkup()
+#     month = [str(i) for i in range(1, 13)]
+#     markup.row(*month[:3])
+#     markup.row(*month[3:6])
+#     markup.row(*month[6:9])
+#     markup.row(*month[9:])
+#
+#     bot.send_message(message.chat.id, "Виберіть місяць в яку вас цікавить розклад", reply_markup=markup)
+#     bot.register_next_step_handler(message, get_month)
+#
+#
+# def get_month(message):
+#     date = message.text
+#     save_data('date', date)
+#     markup = types.ReplyKeyboardMarkup()
+#     dates_range = [str(i) for i in range(1, 32)]
+#     markup.row(*dates_range[:7])
+#     markup.row(*dates_range[7:14])
+#     markup.row(*dates_range[14:21])
+#     markup.row(*dates_range[21: 28])
+#     markup.row(*dates_range[28:32])
+#     bot.send_message(message.chat.id, "Виберіть число в яке вас цікавить розклад", reply_markup=markup)
+#     bot.register_next_step_handler(message, get_date)
+
+
 def get_date(message):
-    date = f"{message.text}.{info.get('date', '')}"
-    save_data('date', date)
+    # date = f"{message.text}.{info.get('date', '')}"
+    day = DAYS[message.text]
+    save_data('day', day)
     bot.send_message(message.chat.id, 'Ось розклад по вашому запиту')
     show(message)
 
 
 def show(message):
     """Вывод информации по введенным пользователем критериям"""
-    data = pd.read_csv('РОЗКЛАД.csv')
-    information = list(data.query(f'Date == {info.get("date", "")}').values[0])
-    [bot.send_message(message.chat.id, f"{i - 2} Урок = > {information[i]}") for i in range(3, len(information)) if
-     type(information[i]) == str]
+    response = get_response(params=info)
 
+    [bot.send_message(message.chat.id,
+                      f"{el['lessonNumber']} УРОК -{el['auditoryNumber']}{el['lessonType']} -> {el['disciplineName']} <- {el['lecturer']}")
+     for el in response['curricularWeekList'][0].get('curricularDayList', 'ERROR')[4].get('lessonList', 'ERROR')]
     markup = types.ReplyKeyboardMarkup()
     markup.row('ТАК', 'НІ')
-    bot.send_message(message.chat.id, "Бажаєте переглянути даний розклад в іншу дату ?", reply_markup=markup)
+    bot.send_message(message.chat.id, "Бажаєте переглянути даний розклад на іншій неділі ?", reply_markup=markup)
 
 
 def save_data(key: str, value: str):
@@ -153,5 +174,4 @@ def word_search(text: str) -> bool:
 
 
 if __name__ == '__main__':
-    main_scraping()
     bot.polling(none_stop=True, interval=0)
