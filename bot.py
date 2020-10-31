@@ -9,7 +9,6 @@ from telebot import types
 
 DAYS = {'Пн': 0, 'Вт': 1, 'Ср': 2, 'Чт': 3, 'Пт': 4, 'Сб': 5, 'Нд': 6}
 CS = {'I': 1, 'II': 2, 'III': 3, 'IV': 4}
-
 info = {}
 
 # Запускает т.н. Long Polling, а параметр none_stop=True говорит,
